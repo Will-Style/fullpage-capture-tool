@@ -1,0 +1,25 @@
+{
+  "name": "fullpage-capture",
+  "version": "1.0.0",
+  "description": "URLを指定してWebサイトのフルページキャプチャとスクロール動画をRetina解像度で取得するローカルWebアプリ",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "concurrently -k -n api,ui -c cyan,magenta \"node server.js\" \"npm --prefix ui run dev\"",
+    "build:ui": "npm --prefix ui install && npm --prefix ui run build",
+    "dev:ui": "npm --prefix ui run dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "playwright": "^1.62.1",
+    "sharp": "^0.35.3"
+  },
+  "private": true,
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  }
+}

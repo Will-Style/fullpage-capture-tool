@@ -1,0 +1,18 @@
+node_modules/
+
+# Claude Code のローカル設定（マシン固有のパスが入る）
+.claude/settings.local.json
+
+# UI のビルド成果物。`npm run build:ui` で生成する
+public/
+
+# 出力は OS の一時ディレクトリに置いているが、念のため
+*.mp4
+*.webm
+
+.DS_Store
+*.log
+npm-debug.log*
+
+# TypeScript のビルドキャッシュ
+*.tsbuildinfo
