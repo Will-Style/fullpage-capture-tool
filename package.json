@@ -4,14 +4,16 @@
   "description": "URLを指定してWebサイトのフルページキャプチャとスクロール動画をRetina解像度で取得するローカルWebアプリ",
   "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "concurrently -k -n api,ui -c cyan,magenta \"node server.js\" \"npm --prefix ui run dev\"",
-    "build:ui": "npm --prefix ui install && npm --prefix ui run build",
-    "dev:ui": "npm --prefix ui run dev"
+    "postinstall": "playwright install chromium",
+    "start": "node scripts/ensure-ui.js && node server.js",
+    "dev": "concurrently -k -n api,ui -c cyan,magenta \"node server.js\" \"pnpm --filter fullpage-capture-ui dev\"",
+    "build": "pnpm --filter fullpage-capture-ui build",
+    "dev:ui": "pnpm --filter fullpage-capture-ui dev"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "packageManager": "pnpm@10.33.4",
   "type": "commonjs",
   "dependencies": {
     "express": "^5.2.1",
