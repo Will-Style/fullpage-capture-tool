@@ -9,18 +9,31 @@ URL を入力すると、Web サイトをキャプチャできるローカル We
 ## 必要なもの
 
 - Node.js
+- **pnpm**。`corepack enable pnpm` か `npm i -g pnpm`
 - **ffmpeg**（動画機能のみ）。`brew install ffmpeg`。別の場所にあるなら `FFMPEG_PATH` で指定できます
 
 ## 起動
 
 ```bash
-cd ~/Workspace/DEVELOP/fullpage-capture
-npm start
+git clone git@github.com:Will-Style/fullpage-capture-tool.git
+cd fullpage-capture-tool
+pnpm install
+pnpm build
+pnpm dev
 ```
 
-ブラウザで <http://localhost:3838> を開きます。停止は `Ctrl+C`。
+`pnpm dev` は API（3838）と Vite の開発サーバー（5173）を同時に起動し、**<http://localhost:5173> が自動で開きます**。停止は `Ctrl+C`。
 
-ポートを変えたい場合は `PORT=4000 npm start`。
+| コマンド | 内容 |
+|---|---|
+| `pnpm install` | 依存の取得。あわせて Playwright の Chromium も入ります |
+| `pnpm build` | `ui/` をビルドして `public/` を生成 |
+| `pnpm dev` | API + Vite 開発サーバー。UI の変更が即反映されます（5173） |
+| `pnpm start` | ビルド済みの `public/` を配信するだけの起動（3838） |
+
+`pnpm start` は `public/` が無ければ自動で `pnpm build` を実行します。ポートを変えたい場合は `PORT=4000 pnpm start`（`pnpm dev` では API 側のポートが変わります）。
+
+> Playwright の Chromium は `pnpm install` の postinstall で入ります。手動で入れ直すなら `pnpm exec playwright install chromium` です。
 
 ## 使い方（静止画）
 
@@ -250,11 +263,15 @@ Chromium の `deviceScaleFactor` に 2 を指定しています。1x で撮っ�
 ## 構成
 
 ```
-fullpage-capture/
-├── capture.js        静止画キャプチャ（Playwright + sharp）
-├── video.js          スクロール動画（Playwright + ffmpeg）
-├── server.js         Express API とファイル配信
-├── public/index.html UI（依存ライブラリなし）
+fullpage-capture-tool/
+├── capture.js           静止画キャプチャ（Playwright + sharp）
+├── video.js             スクロール動画（Playwright + ffmpeg）
+├── server.js            Express API と public/ の配信
+├── scripts/
+│   └── ensure-ui.js     pnpm start 時、UI が未ビルドなら pnpm build を回す
+├── ui/                  UI のソース（React + Vite + Tailwind）
+├── public/              UI のビルド成果物。pnpm build が生成（Git 管理外）
+├── pnpm-workspace.yaml  ルートと ui/ をまとめる pnpm ワークスペース定義
 └── package.json
 ```
 

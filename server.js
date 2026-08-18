@@ -29,6 +29,22 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// public/ は UI のビルド成果物で Git 管理外。クローン直後は存在しない。
+// index.html があれば上の static が返すので、ここへ来た時点で未ビルドと分かる。
+app.get('/', (_req, res) => {
+  res
+    .status(503)
+    .type('html')
+    .send(
+      '<!doctype html><html lang="ja"><meta charset="utf-8"><title>Fullpage Capture</title>' +
+        '<body style="font-family:system-ui,sans-serif;max-width:36em;margin:4em auto;line-height:1.8">' +
+        '<h1>UI がまだビルドされていません</h1>' +
+        '<p>ターミナルで次を実行してから、この画面を再読み込みしてください。</p>' +
+        '<pre style="background:#f4f4f5;padding:1em;border-radius:.5em">pnpm build</pre>' +
+        '</body></html>'
+    );
+});
+
 /** id -> { file, filename, mime, meta } */
 const results = new Map();
 
@@ -463,7 +479,7 @@ const MAX_UPLOAD_BYTES = 2 * 1024 * 1024 * 1024; // 2GB
 function safeUploadName(raw) {
   const cleaned = String(raw || 'video')
     .replace(/[/\\]/g, '_')
-    .replace(/[ -]/g, '')
+    .replace(/[\x00-\x1f]/g, '')
     .slice(-120);
   const ext = (path.extname(cleaned) || '.mp4').toLowerCase();
   const base = path.basename(cleaned, path.extname(cleaned)) || 'video';
@@ -601,6 +617,9 @@ app.post('/api/storage/clear', (req, res) => {
 });
 
 const server = app.listen(PORT, () => {
+  if (!fs.existsSync(path.join(__dirname, 'public', 'index.html'))) {
+    console.warn('\n  UI が未ビルドです。`pnpm build` を実行してください。');
+  }
   console.log(`\n  Fullpage Capture → http://localhost:${PORT}\n`);
 });
 
