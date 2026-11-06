@@ -12,9 +12,20 @@ let browserPromise = null;
 /** Chromium は起動が重いので 1 インスタンスを使い回す */
 async function getBrowser() {
   if (!browserPromise) {
-    browserPromise = chromium.launch({
-      args: ['--disable-lcd-text', '--force-color-profile=srgb', '--hide-scrollbars'],
-    });
+    browserPromise = chromium
+      .launch({
+        args: ['--disable-lcd-text', '--force-color-profile=srgb', '--hide-scrollbars'],
+      })
+      .catch((err) => {
+        browserPromise = null;
+        // Chromium 本体が入っていないときの Playwright のエラーは原因が分かりにくいので言い換える。
+        if (/Executable doesn't exist|playwright install/i.test(String(err && err.message))) {
+          throw new Error(
+            'Playwright の Chromium が入っていません。プロジェクト直下で `pnpm exec playwright install chromium` を実行してから、もう一度お試しください。'
+          );
+        }
+        throw err;
+      });
   }
   return browserPromise;
 }

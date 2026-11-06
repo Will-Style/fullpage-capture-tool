@@ -9,6 +9,7 @@ URL を入力すると、Web サイトをキャプチャできるローカル We
 ## 必要なもの
 
 - Node.js
+- **macOS 13 (Ventura) 以上**。理由は後述の「対応 macOS と Playwright のバージョン」
 - **pnpm**。`corepack enable pnpm` か `npm i -g pnpm`
 - **ffmpeg**（動画機能のみ）。`brew install ffmpeg`。別の場所にあるなら `FFMPEG_PATH` で指定できます
 
@@ -33,7 +34,46 @@ pnpm dev
 
 `pnpm start` は `public/` が無ければ自動で `pnpm build` を実行します。ポートを変えたい場合は `PORT=4000 pnpm start`（`pnpm dev` では API 側のポートが変わります）。
 
-> Playwright の Chromium は `pnpm install` の postinstall で入ります。手動で入れ直すなら `pnpm exec playwright install chromium` です。
+> Playwright の Chromium は `pnpm install` の postinstall で入ります。`pnpm dev` / `pnpm start` の前にも自動で確認するので、入っていなければそこで入ります（入っていれば素通り）。手動で入れ直すなら `pnpm exec playwright install chromium` です。
+
+### `Executable doesn't exist at .../chrome-headless-shell` と出るとき
+
+Playwright の Chromium が入っていません。zip で受け取ったフォルダをそのまま使っている、`pnpm install` が走っていない、といったときに起きます。プロジェクト直下で次を実行してください。
+
+```bash
+pnpm install
+pnpm exec playwright install chromium
+```
+
+ffmpeg の有無とは関係のないエラーです（動画は Chromium でコマを撮ってから ffmpeg でつなぐので、Chromium が無いと動画生成の途中でこのエラーになります）。
+
+### `ポート 3838 は既に使われています` と出るとき（起動直後に `node server.js exited with code 0` で止まる）
+
+別のターミナルで `pnpm dev` / `pnpm start` が動いたままになっているか、前回のプロセスが残っています。次で確認して終了してください。
+
+```bash
+lsof -nP -iTCP:3838 -sTCP:LISTEN   # 使っているプロセスの PID が出る
+kill <PID>
+```
+
+一時的に別のポートで動かすなら `PORT=4000 pnpm dev` です（Vite のプロキシ先も同じ値を見ます）。
+
+### 対応 macOS と Playwright のバージョン
+
+**Playwright は 1.62.0 で macOS 13 (Ventura) 向けの Chromium 配布を打ち切りました。** Ventura のマシンで `pnpm install` すると、ダウンロード段階で次のように落ちます。
+
+```
+Playwright does not support chromium on mac13-arm64
+```
+
+そのため **`playwright` は `1.61.1` に固定しています**（`^` を付けていないのは意図的です。上げると Ventura のメンバーが動かなくなります）。1.61.1 は macOS 13 以降すべてに対応しています。
+
+| Playwright | mac13-arm64 向け Chromium |
+|---|---|
+| 1.61.1（採用） | あり |
+| 1.62.0 以降 | なし |
+
+チーム全員が macOS 14 以上になったら、この固定を外して最新に上げてください。
 
 ## 使い方（静止画）
 
@@ -268,7 +308,8 @@ fullpage-capture-tool/
 ├── video.js             スクロール動画（Playwright + ffmpeg）
 ├── server.js            Express API と public/ の配信
 ├── scripts/
-│   └── ensure-ui.js     pnpm start 時、UI が未ビルドなら pnpm build を回す
+│   ├── ensure-ui.js     pnpm start 時、UI が未ビルドなら pnpm build を回す
+│   └── ensure-browser.js 起動前に Playwright の Chromium を確認し、無ければ入れる
 ├── ui/                  UI のソース（React + Vite + Tailwind）
 ├── public/              UI のビルド成果物。pnpm build が生成（Git 管理外）
 ├── pnpm-workspace.yaml  ルートと ui/ をまとめる pnpm ワークスペース定義

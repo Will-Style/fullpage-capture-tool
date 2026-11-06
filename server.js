@@ -616,7 +616,22 @@ app.post('/api/storage/clear', (req, res) => {
   }
 });
 
-const server = app.listen(PORT, () => {
+// Express 5 の app.listen は listen 失敗時に throw せず、コールバックの第 1 引数にエラーを渡す。
+// 放置するとバナーだけ出して exit 0 で静かに終了してしまい原因が分からないので、ここで明示的に落とす。
+const server = app.listen(PORT, (err) => {
+  if (err) {
+    if (err.code === 'EADDRINUSE') {
+      console.error(
+        `\n  ポート ${PORT} は既に使われています。` +
+          '\n  別のターミナルで起動中の Fullpage Capture（pnpm dev / pnpm start）を止めるか、' +
+          `\n  \`lsof -nP -iTCP:${PORT} -sTCP:LISTEN\` で使用中のプロセスを確認して終了してください。` +
+          `\n  別のポートで起動する場合: \`PORT=4000 pnpm dev\`\n`
+      );
+    } else {
+      console.error('\n  サーバーを起動できませんでした:', err);
+    }
+    process.exit(1);
+  }
   if (!fs.existsSync(path.join(__dirname, 'public', 'index.html'))) {
     console.warn('\n  UI が未ビルドです。`pnpm build` を実行してください。');
   }
